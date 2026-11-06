@@ -10,6 +10,7 @@ import {
 import {
 	makeFrames,
 	makeId3v2Prefix,
+	makeVbriFrames,
 	makeXingInfoFrames,
 	splitIntoChunks,
 } from './helpers/mp3Fixtures.js'
@@ -52,6 +53,19 @@ test('does not count a leading Xing metadata frame from a stream', async () => {
 
 	assert.equal(
 		await countMpegLayer3FramesFromStream(splitIntoChunks(frames, 29)),
+		2,
+	)
+})
+
+test('does not count a leading VBRI metadata frame as audio', () => {
+	assert.equal(countMpegLayer3Frames(makeVbriFrames(2)), 2)
+})
+
+test('does not count a leading VBRI metadata frame from a stream', async () => {
+	assert.equal(
+		await countMpegLayer3FramesFromStream(
+			splitIntoChunks(makeVbriFrames(2), 29),
+		),
 		2,
 	)
 })

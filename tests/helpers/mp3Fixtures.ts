@@ -54,6 +54,17 @@ export function makeXingInfoFrames(audioFrameCount: number): Buffer {
 	return frames
 }
 
+export function makeVbriFrames(audioFrameCount: number): Buffer {
+	const frames = makeFrames(0xfb, 417, audioFrameCount + 1)
+	const vbriOffset = 36
+
+	Buffer.from('VBRI').copy(frames, vbriOffset)
+	frames.writeUInt16BE(1, vbriOffset + 4)
+	frames.writeUInt32BE(frames.length, vbriOffset + 10)
+	frames.writeUInt32BE(audioFrameCount, vbriOffset + 14)
+	return frames
+}
+
 export async function* splitIntoChunks(
 	buffer: Buffer,
 	chunkSize: number,

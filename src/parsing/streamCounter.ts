@@ -97,7 +97,7 @@ function countAvailableFrames(state: StreamCounterState, final: boolean): void {
 		}
 
 		state.streamSampleRate = frame.sampleRate
-		if (state.physicalFrameCount > 0 || !frame.isXingInfoFrame) {
+		if (state.physicalFrameCount > 0 || !frame.isMetadataFrame) {
 			state.frameCount += 1
 		}
 		state.physicalFrameCount += 1
@@ -161,7 +161,7 @@ function finish(state: StreamCounterState): number {
 /**
  * Counts MPEG-1 Layer III audio frames from a chunked input stream.
  *
- * A leading Xing/Info metadata frame is excluded from the count.
+ * A leading Xing/Info or VBRI metadata frame is excluded from the count.
  *
  * @throws {MpegParseError} If the stream is invalid, truncated, or unsupported.
  */

@@ -38,7 +38,7 @@ function parseMpegLayer3(buffer: unknown): MpegLayer3ParseResult {
 		}
 
 		streamSampleRate = frame.sampleRate
-		if (physicalFrameCount > 0 || !frame.isXingInfoFrame) {
+		if (physicalFrameCount > 0 || !frame.isMetadataFrame) {
 			frameCount += 1
 		}
 		physicalFrameCount += 1
@@ -75,7 +75,7 @@ export function isMpegLayer3(buffer: unknown): boolean {
 /**
  * Counts MPEG-1 Layer III audio frames in a complete MP3 buffer.
  *
- * A leading Xing/Info metadata frame is excluded from the count. Invalid or
+ * A leading Xing/Info or VBRI metadata frame is excluded from the count. Invalid or
  * unsupported input throws a {@link MpegParseError} with a code and, when
  * available, the byte offset where parsing failed.
  *

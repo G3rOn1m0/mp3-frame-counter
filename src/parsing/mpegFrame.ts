@@ -20,7 +20,7 @@ type FrameHeaderFields = {
 export type FrameInfo = {
 	sampleRate: number
 	frameLength: number
-	isXingInfoFrame: boolean
+	isMetadataFrame: boolean
 }
 
 export type FrameParseOptions = {
@@ -126,10 +126,15 @@ export function readLayer3Frame(
 	const xingOffset =
 		offset + 4 + (fields.hasCrc ? 2 : 0) + sideInformationLength
 	const xingIdentifier = buffer.toString('ascii', xingOffset, xingOffset + 4)
+	// VBRI headers sit at a fixed offset, regardless of channel mode or CRC.
+	const vbriIdentifier = buffer.toString('ascii', offset + 36, offset + 40)
 
 	return {
 		sampleRate,
 		frameLength,
-		isXingInfoFrame: xingIdentifier === 'Xing' || xingIdentifier === 'Info',
+		isMetadataFrame:
+			xingIdentifier === 'Xing' ||
+			xingIdentifier === 'Info' ||
+			vbriIdentifier === 'VBRI',
 	}
 }

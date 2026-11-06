@@ -64,7 +64,7 @@ Uploaded files are temporarily written to `uploads/` while they are processed, t
 
 - MPEG-1 Layer III audio is supported. Other MPEG versions or layers are rejected.
 - An optional ID3v2 tag at the beginning and ID3v1 tag at the end are handled.
-- A leading Xing/Info metadata frame is excluded from the audio frame count.
+- A leading Xing/Info or VBRI metadata frame is excluded from the audio frame count. VBRI support is covered by a synthetic test fixture only; it has not been checked against a real VBRI-encoded file.
 - The parser calculates each frame's length from its own header, so variable bitrates are supported. It requires a consistent sample rate across frames.
 - The parser validates frame headers and boundaries; it does not decode or verify the audio payload itself.
 

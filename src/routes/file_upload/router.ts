@@ -2,13 +2,20 @@ import { Router } from 'express'
 import multer from 'multer'
 import { handleFileUpload } from './controller.js'
 
-const upload = multer({
-	dest: 'uploads/',
-	limits: { fileSize: 100 * 1024 * 1024 },
-})
+export const DEFAULT_UPLOAD_LIMIT_BYTES = 100 * 1024 * 1024
 
-const router = Router()
+export function createFileUploadRouter(
+	uploadLimitBytes = DEFAULT_UPLOAD_LIMIT_BYTES,
+) {
+	const upload = multer({
+		dest: 'uploads/',
+		limits: { fileSize: uploadLimitBytes },
+	})
 
-router.post('/', upload.single('file'), handleFileUpload)
+	const router = Router()
+	router.post('/', upload.single('file'), handleFileUpload)
 
-export default router
+	return router
+}
+
+export default createFileUploadRouter()

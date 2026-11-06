@@ -1,12 +1,6 @@
-import express from 'express'
-import { errorHandler } from './middleware/errorHandler.js'
-import router from './routes/router.js'
+import { createApp } from './app.js'
 
-const app = express()
-app.use(express.json())
-app.use('/api', router)
-app.use(errorHandler)
-
-app.listen(3000, () => {
-	console.log('Server is running on port 3000')
+const port = Number(process.env.PORT ?? 3000)
+createApp().listen(port, () => {
+	console.log(`Server is running on port ${port}`)
 })

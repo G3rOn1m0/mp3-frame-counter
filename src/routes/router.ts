@@ -1,8 +1,15 @@
 import { Router } from 'express'
-import fileUploadRouter from './file_upload/router.js'
+import {
+	createFileUploadRouter,
+	DEFAULT_UPLOAD_LIMIT_BYTES,
+} from './file_upload/router.js'
 
-const router = Router()
+export { DEFAULT_UPLOAD_LIMIT_BYTES }
 
-router.use('/file_upload', fileUploadRouter)
+export function createApiRouter(uploadLimitBytes = DEFAULT_UPLOAD_LIMIT_BYTES) {
+	const router = Router()
+	router.use('/file_upload', createFileUploadRouter(uploadLimitBytes))
+	return router
+}
 
-export default router
+export default createApiRouter()

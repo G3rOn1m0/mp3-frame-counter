@@ -8,7 +8,7 @@ export { DEFAULT_UPLOAD_LIMIT_BYTES }
 
 export function createApiRouter(uploadLimitBytes = DEFAULT_UPLOAD_LIMIT_BYTES) {
 	const router = Router()
-	router.use('/file_upload', createFileUploadRouter(uploadLimitBytes))
+	router.use('/file-upload', createFileUploadRouter(uploadLimitBytes))
 	return router
 }
 

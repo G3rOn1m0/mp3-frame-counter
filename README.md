@@ -31,12 +31,12 @@ npm start
 
 ## Upload an MP3
 
-Send a `multipart/form-data` request to `POST /api/file_upload`. The uploaded file must use the field name `file`.
+Send a `multipart/form-data` request to `POST /file-upload`. The uploaded file must use the field name `file`.
 
 ```sh
 curl -i \
   -F 'file=@./path/to/your file.mp3' \
-  http://localhost:3000/api/file_upload
+  http://localhost:3000/file-upload
 ```
 
 The `@` tells curl to attach the file's contents. Without it, curl sends the path as ordinary text. The quotes keep paths containing spaces together.
@@ -45,7 +45,7 @@ A successful request returns JSON similar to:
 
 ```json
 {
-  "frameCount": 6089
+	"frameCount": 6089
 }
 ```
 
@@ -53,7 +53,8 @@ If no file is attached, the API returns `400 Bad Request`:
 
 ```json
 {
-  "message": "No file uploaded."
+	"code": "NO_FILE",
+	"message": "No file uploaded."
 }
 ```
 
@@ -67,7 +68,7 @@ Uploaded files are temporarily written to `uploads/` while they are processed, t
 - The parser calculates each frame's length from its own header, so variable bitrates are supported. It requires a consistent sample rate across frames.
 - The parser validates frame headers and boundaries; it does not decode or verify the audio payload itself.
 
-Parser errors are passed to Express's default error handler. The API does not yet provide a stable JSON error format for malformed or unsupported audio.
+Errors return JSON with a stable `code`, a `message`, and, for parser errors, the byte `offset` where the problem was found. Unsupported MPEG versions or layers return `415`, malformed or unparseable audio returns `422`, and uploads over the size limit return `413`.
 
 ## Test and Build
 
@@ -83,4 +84,10 @@ Compile the TypeScript source:
 npm run build
 ```
 
-The current tests cover parser behavior; they do not exercise the HTTP upload route.
+Format the code with Biome:
+
+```sh
+npm run format
+```
+
+The tests cover parser behavior and the HTTP upload route, including error responses.

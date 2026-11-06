@@ -24,7 +24,7 @@ before(async () => {
 	if (!address || typeof address === 'string') {
 		throw new Error('Test server did not bind to a TCP port.')
 	}
-	endpoint = `http://127.0.0.1:${address.port}/api/file_upload`
+	endpoint = `http://127.0.0.1:${address.port}/file-upload`
 })
 
 after(async () => {

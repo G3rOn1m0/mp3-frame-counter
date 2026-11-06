@@ -11,7 +11,7 @@ export function createApp({
 }: AppOptions = {}) {
 	const app = express()
 	app.use(express.json())
-	app.use('/api', createApiRouter(uploadLimitBytes))
+	app.use(createApiRouter(uploadLimitBytes))
 	app.use(errorHandler)
 	return app
 }

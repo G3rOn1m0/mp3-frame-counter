@@ -2,11 +2,12 @@
   "name": "mp3-frame-counter",
   "version": "1.0.0",
   "description": "",
-  "main": "server.ts",
+  "main": "dist/server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
+    "format": "biome format --write src tests",
     "test": "npm run typecheck && tsx --test \"tests/**/*.test.ts\"",
     "typecheck": "tsc --project tsconfig.test.json --noEmit"
   },

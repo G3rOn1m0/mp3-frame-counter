@@ -1,5 +1,5 @@
-import fileUploadRouter from './file_upload/index.js'
 import { Router } from 'express'
+import fileUploadRouter from './file_upload/router.js'
 
 const router = Router()
 

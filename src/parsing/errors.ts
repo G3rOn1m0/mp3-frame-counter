@@ -24,3 +24,25 @@ export class MpegParseError extends Error {
 		this.offset = offset ?? null
 	}
 }
+
+/** Mapping MpegParseErrorCode to API error responses. */
+export const MpegParseErrorCodeToApiResponse: Record<
+	MpegParseErrorCode,
+	{ status: number; message: string }
+> = {
+	INVALID_INPUT: { status: 400, message: 'Invalid input.' },
+	INVALID_ID3V2_TAG: { status: 422, message: 'Invalid ID3v2 tag.' },
+	UNSUPPORTED_MPEG_VERSION: {
+		status: 415,
+		message: 'Unsupported MPEG version.',
+	},
+	UNSUPPORTED_MPEG_LAYER: { status: 415, message: 'Unsupported MPEG layer.' },
+	INVALID_FRAME: { status: 422, message: 'Invalid frame.' },
+	TRUNCATED_FRAME: { status: 422, message: 'Truncated frame.' },
+	NO_AUDIO_FRAMES: { status: 422, message: 'No audio frames found.' },
+	INSUFFICIENT_FRAMES: { status: 422, message: 'Insufficient frames.' },
+	INCONSISTENT_SAMPLE_RATE: {
+		status: 422,
+		message: 'Inconsistent sample rate.',
+	},
+}

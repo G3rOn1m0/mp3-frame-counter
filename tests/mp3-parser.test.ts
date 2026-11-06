@@ -3,6 +3,7 @@ import { Buffer } from 'node:buffer'
 import { test } from 'node:test'
 import {
 	countMpegLayer3Frames,
+	countMpegLayer3FramesFromStream,
 	isMpegLayer3,
 	MpegParseError,
 } from '../src/parsing/mp3Parser.js'
@@ -37,12 +38,25 @@ function makeId3v2Prefix(body) {
 	return Buffer.concat([header, body])
 }
 
+async function* splitIntoChunks(buffer, chunkSize) {
+	for (let offset = 0; offset < buffer.length; offset += chunkSize) {
+		yield buffer.subarray(offset, offset + chunkSize)
+	}
+}
+
 test('accepts consecutive MPEG Layer III frames', () => {
 	assert.equal(isMpegLayer3(makeFrames(0xfb)), true)
 })
 
 test('counts consecutive MPEG Layer III frames', () => {
 	assert.equal(countMpegLayer3Frames(makeFrames(0xfb)), 2)
+})
+
+test('counts frames when stream chunks split frame headers and payloads', async () => {
+	assert.equal(
+		await countMpegLayer3FramesFromStream(splitIntoChunks(makeFrames(0xfb), 7)),
+		2,
+	)
 })
 
 test('does not count a leading Xing metadata frame as audio', () => {
@@ -54,6 +68,18 @@ test('does not count a leading Xing metadata frame as audio', () => {
 	assert.equal(countMpegLayer3Frames(frames), 2)
 })
 
+test('does not count a leading Xing metadata frame from a stream', async () => {
+	const frames = makeFrames(0xfb, 417, 3)
+	Buffer.from('Xing').copy(frames, 36)
+	frames.writeUInt32BE(1, 40)
+	frames.writeUInt32BE(2, 44)
+
+	assert.equal(
+		await countMpegLayer3FramesFromStream(splitIntoChunks(frames, 29)),
+		2,
+	)
+})
+
 test('counts frames before a trailing ID3v1 tag', () => {
 	const id3v1Tag = Buffer.alloc(128)
 	Buffer.from('TAG').copy(id3v1Tag)
@@ -63,9 +89,28 @@ test('counts frames before a trailing ID3v1 tag', () => {
 	)
 })
 
+test('counts streamed frames before a trailing ID3v1 tag', async () => {
+	const id3v1Tag = Buffer.alloc(128)
+	Buffer.from('TAG').copy(id3v1Tag)
+	const input = Buffer.concat([makeFrames(0xfb), id3v1Tag])
+	assert.equal(
+		await countMpegLayer3FramesFromStream(splitIntoChunks(input, 19)),
+		2,
+	)
+})
+
 test('accepts Layer III frames after a valid ID3v2 tag', () => {
 	const tag = makeId3v2Prefix(Buffer.from([0x01, 0x02, 0x03, 0x04]))
 	assert.equal(isMpegLayer3(Buffer.concat([tag, makeFrames(0xfb)])), true)
+})
+
+test('counts streamed frames after a valid ID3v2 tag', async () => {
+	const tag = makeId3v2Prefix(Buffer.from([0x01, 0x02, 0x03, 0x04]))
+	const input = Buffer.concat([tag, makeFrames(0xfb)])
+	assert.equal(
+		await countMpegLayer3FramesFromStream(splitIntoChunks(input, 3)),
+		2,
+	)
 })
 
 test('rejects MPEG-2 Layer III frames', () => {

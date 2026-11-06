@@ -1,25 +1,34 @@
+import { createReadStream } from 'node:fs'
+import { unlink } from 'node:fs/promises'
 import type { Request, Response } from 'express'
 import { Router } from 'express'
-import fs from 'fs'
 import multer from 'multer'
-import { countMpegLayer3Frames } from '../../parsing/mp3Parser.js'
+import { countMpegLayer3FramesFromStream } from '../../parsing/mp3Parser.js'
 
 const upload = multer({ dest: 'uploads/' })
 
 const router = Router()
 
-router.post('/', upload.single('file'), (req: Request, res: Response) => {
-	// TODO: Validate and process the uploaded file.
-	const file = req.file
+router.post(
+	'/',
+	upload.single('file'),
+	async (req: Request, res: Response, next) => {
+		const file = req.file
 
-	if (!file) {
-		return res.status(400).json({ message: 'No file uploaded.' })
-	}
-	// TODO: Process the uploaded file.
-	const filePath = file.path
-	const fileBuffer = fs.readFileSync(filePath)
-	const frameCount = countMpegLayer3Frames(fileBuffer)
-	return res.json({ frameCount })
-})
+		if (!file) {
+			return res.status(400).json({ message: 'No file uploaded.' })
+		}
+		try {
+			const frameCount = await countMpegLayer3FramesFromStream(
+				createReadStream(file.path),
+			)
+			return res.json({ frameCount })
+		} catch (error) {
+			return next(error)
+		} finally {
+			await unlink(file.path).catch(() => {})
+		}
+	},
+)
 
 export default router

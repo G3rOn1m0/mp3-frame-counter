@@ -81,6 +81,7 @@ function countAvailableFrames(state: StreamCounterState, final: boolean): void {
 		const frame = readLayer3Frame(state.pending, 0, audioEnd, {
 			baseOffset: state.pendingOffset,
 			allowIncomplete: !final,
+			stopAtInvalidSync: state.physicalFrameCount > 0,
 		})
 		if (!frame) {
 			break

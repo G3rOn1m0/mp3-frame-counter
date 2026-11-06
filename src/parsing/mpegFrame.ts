@@ -26,6 +26,8 @@ export type FrameInfo = {
 export type FrameParseOptions = {
 	baseOffset?: number
 	allowIncomplete?: boolean
+	// Set only after a valid frame: a non-sync position then marks the end of audio.
+	stopAtInvalidSync?: boolean
 }
 
 function readHeaderFields(header: number): FrameHeaderFields {
@@ -81,7 +83,11 @@ export function readLayer3Frame(
 	audioEnd: number,
 	options: FrameParseOptions = {},
 ): FrameInfo | null {
-	const { baseOffset = 0, allowIncomplete = false } = options
+	const {
+		baseOffset = 0,
+		allowIncomplete = false,
+		stopAtInvalidSync = false,
+	} = options
 	if (offset === audioEnd) {
 		return null
 	}
@@ -97,6 +103,9 @@ export function readLayer3Frame(
 	}
 
 	const fields = readHeaderFields(buffer.readUInt32BE(offset))
+	if (stopAtInvalidSync && fields.sync !== 0x7ff) {
+		return null
+	}
 	validateHeader(fields, baseOffset + offset)
 
 	const bitrateIndexValue = mpeg1Layer3Bitrates[fields.bitrateIndex]

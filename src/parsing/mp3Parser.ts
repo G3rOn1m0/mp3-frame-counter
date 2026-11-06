@@ -25,7 +25,9 @@ function parseMpegLayer3(buffer: unknown): MpegLayer3ParseResult {
 	let streamSampleRate: number | null = null
 
 	while (offset < audioEnd) {
-		const frame = readLayer3Frame(buffer, offset, audioEnd)
+		const frame = readLayer3Frame(buffer, offset, audioEnd, {
+			stopAtInvalidSync: physicalFrameCount > 0,
+		})
 		if (!frame) {
 			break
 		}

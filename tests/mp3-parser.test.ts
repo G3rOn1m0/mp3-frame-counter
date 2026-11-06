@@ -140,16 +140,26 @@ test('rejects a truncated frame instead of returning a partial count', () => {
 	)
 })
 
-test('rejects invalid data after valid frames instead of returning a partial count', () => {
-	const invalidTrailingData = Buffer.concat([
-		makeFrames(0xfb),
-		Buffer.from([0x00, 0x01, 0x02, 0x03]),
-	])
+test('ignores non-frame bytes after valid frames', () => {
+	const input = Buffer.concat([makeFrames(0xfb), Buffer.alloc(16)])
+	assert.equal(countMpegLayer3Frames(input), 2)
+})
+
+test('ignores non-frame bytes after valid frames from a stream', async () => {
+	const input = Buffer.concat([makeFrames(0xfb), Buffer.alloc(16)])
+	assert.equal(
+		await countMpegLayer3FramesFromStream(splitIntoChunks(input, 7)),
+		2,
+	)
+})
+
+test('rejects non-frame bytes before the first frame', () => {
+	const input = Buffer.concat([Buffer.alloc(4), makeFrames(0xfb)])
 	assert.throws(
-		() => countMpegLayer3Frames(invalidTrailingData),
+		() => countMpegLayer3Frames(input),
 		(error: unknown) =>
 			error instanceof MpegParseError &&
 			error.code === 'INVALID_FRAME' &&
-			error.offset === 834,
+			error.offset === 0,
 	)
 })

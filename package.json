@@ -2,11 +2,11 @@
   "name": "mp3-frame-counter",
   "version": "1.0.0",
   "description": "",
-  "main": "app.ts",
+  "main": "server.ts",
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
-    "start": "node dist/app.js",
+    "start": "node dist/server.js",
     "test": "tsx --test \"tests/**/*.test.ts\""
   },
   "keywords": [],

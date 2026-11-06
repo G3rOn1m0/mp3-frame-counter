@@ -11,7 +11,10 @@ export async function handleFileUpload(
 	const file = req.file
 
 	if (!file) {
-		return res.status(400).json({ message: 'No file uploaded.' })
+		return res.status(400).json({
+			code: 'NO_FILE',
+			message: 'No file uploaded.',
+		})
 	}
 	try {
 		const frameCount = await countMpegLayer3FramesFromStream(

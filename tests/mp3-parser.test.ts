@@ -7,42 +7,12 @@ import {
 	isMpegLayer3,
 	MpegParseError,
 } from '../src/parsing/mp3Parser.js'
-
-function makeFrames(secondHeaderByte, frameLength = 417, frameCount = 2) {
-	const frames = []
-
-	for (let index = 0; index < frameCount; index += 1) {
-		const frame = Buffer.alloc(frameLength)
-		Buffer.from([0xff, secondHeaderByte, 0x90, 0x64]).copy(frame)
-		frames.push(frame)
-	}
-
-	return Buffer.concat(frames)
-}
-
-function makeId3v2Prefix(body) {
-	const size = body.length
-	const header = Buffer.from([
-		0x49,
-		0x44,
-		0x33,
-		0x04,
-		0x00,
-		0x00,
-		(size >> 21) & 0x7f,
-		(size >> 14) & 0x7f,
-		(size >> 7) & 0x7f,
-		size & 0x7f,
-	])
-
-	return Buffer.concat([header, body])
-}
-
-async function* splitIntoChunks(buffer, chunkSize) {
-	for (let offset = 0; offset < buffer.length; offset += chunkSize) {
-		yield buffer.subarray(offset, offset + chunkSize)
-	}
-}
+import {
+	makeFrames,
+	makeId3v2Prefix,
+	makeXingInfoFrames,
+	splitIntoChunks,
+} from './helpers/mp3Fixtures.js'
 
 test('accepts consecutive MPEG Layer III frames', () => {
 	assert.equal(isMpegLayer3(makeFrames(0xfb)), true)
@@ -50,6 +20,18 @@ test('accepts consecutive MPEG Layer III frames', () => {
 
 test('counts consecutive MPEG Layer III frames', () => {
 	assert.equal(countMpegLayer3Frames(makeFrames(0xfb)), 2)
+})
+
+test('counts each frame across variable bitrates', async () => {
+	const highBitrateFrames = makeFrames(0xfb, 417, 2, 0x90)
+	const lowBitrateFrames = makeFrames(0xfb, 365, 2, 0x80)
+	const frames = Buffer.concat([highBitrateFrames, lowBitrateFrames])
+
+	assert.equal(countMpegLayer3Frames(frames), 4)
+	assert.equal(
+		await countMpegLayer3FramesFromStream(splitIntoChunks(frames, 73)),
+		4,
+	)
 })
 
 test('counts frames when stream chunks split frame headers and payloads', async () => {
@@ -60,19 +42,13 @@ test('counts frames when stream chunks split frame headers and payloads', async 
 })
 
 test('does not count a leading Xing metadata frame as audio', () => {
-	const frames = makeFrames(0xfb, 417, 3)
-	Buffer.from('Xing').copy(frames, 36)
-	frames.writeUInt32BE(1, 40)
-	frames.writeUInt32BE(2, 44)
+	const frames = makeXingInfoFrames(2)
 
 	assert.equal(countMpegLayer3Frames(frames), 2)
 })
 
 test('does not count a leading Xing metadata frame from a stream', async () => {
-	const frames = makeFrames(0xfb, 417, 3)
-	Buffer.from('Xing').copy(frames, 36)
-	frames.writeUInt32BE(1, 40)
-	frames.writeUInt32BE(2, 44)
+	const frames = makeXingInfoFrames(2)
 
 	assert.equal(
 		await countMpegLayer3FramesFromStream(splitIntoChunks(frames, 29)),
@@ -133,7 +109,7 @@ test('rejects an ID3v2 tag larger than the buffer', () => {
 	assert.equal(isMpegLayer3(buffer), false)
 	assert.throws(
 		() => countMpegLayer3Frames(buffer),
-		(error) =>
+		(error: unknown) =>
 			error instanceof MpegParseError &&
 			error.code === 'INVALID_ID3V2_TAG' &&
 			error.message.includes('beyond the end of the file'),
@@ -143,7 +119,7 @@ test('rejects an ID3v2 tag larger than the buffer', () => {
 test('rejects a truncated frame instead of returning a partial count', () => {
 	assert.throws(
 		() => countMpegLayer3Frames(makeFrames(0xfb).subarray(0, 500)),
-		(error) =>
+		(error: unknown) =>
 			error instanceof MpegParseError &&
 			error.code === 'TRUNCATED_FRAME' &&
 			error.offset === 417,
@@ -157,7 +133,7 @@ test('rejects invalid data after valid frames instead of returning a partial cou
 	])
 	assert.throws(
 		() => countMpegLayer3Frames(invalidTrailingData),
-		(error) =>
+		(error: unknown) =>
 			error instanceof MpegParseError &&
 			error.code === 'INVALID_FRAME' &&
 			error.offset === 834,

@@ -23,7 +23,7 @@ export const errorHandler: ErrorRequestHandler = (error, _req, res, next) => {
 		if (error.code === 'LIMIT_FILE_SIZE') {
 			return res.status(413).json({
 				code: 'FILE_TOO_LARGE',
-				message: 'Uploaded file exceeds the 100 MiB limit.',
+				message: 'Uploaded file exceeds the configured size limit.',
 			})
 		}
 
